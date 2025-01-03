@@ -18,37 +18,73 @@ class SinhalaTextProcessor:
 
     def process_text(self, text: str) -> str:
         """
-        Process the input text by first correcting the spelling of the middle word,
+        Process the input text by correcting spelling for all non-subject and non-verb words,
         then checking grammar.
         """
-        # Step 1: Extract and correct the middle word (assumed to be the object)
+        # Step 1: Tokenize and identify subject, object, and verb
         words = text.split()
         if len(words) < 3:
             return "Sentence too short. Please provide a sentence with Subject, Object, and Verb."
-        
-        middle_word_index = len(words) // 2
-        middle_word = words[middle_word_index]
 
-        corrected_word = self.spell_checker.auto_correct(middle_word)
+        # Grammar checker POS tagging to identify subject and verb
+        tokenized_sentences = [
+            self.grammar_checker.tokenizer.tokenize(f'{ss}.') 
+            for ss in self.grammar_checker.tokenizer.split_sentences(text)
+        ]
+        pos_tags = self.grammar_checker.tagger.predict(tokenized_sentences)
 
-        # Replace the middle word in the original sentence
-        words[middle_word_index] = corrected_word
-        corrected_text = ' '.join(words)
+        if not pos_tags or not pos_tags[0]:
+            return "Unable to analyze the sentence."
+
+        tokens = tokenized_sentences[0]
+        tags = pos_tags[0]
+
+        subject = None
+        verb = None
+
+        # Find subject and verb dynamically
+        for i, (token, tag) in enumerate(tags):
+            if tag == 'PRP' and not subject:
+                subject = token
+            if tag.startswith('V') and not verb:
+                verb = token
+
+        if not subject or not verb:
+            return "Sentence lacks a clear subject or verb."
+
+        # Step 2: Correct spelling for all words except subject and verb
+        corrected_words = []
+        for word in words:
+            if word != subject and word != verb:
+                corrected_word = self.spell_checker.auto_correct(word)
+                corrected_words.append(corrected_word)
+            else:
+                corrected_words.append(word)
+
+        corrected_text = ' '.join(corrected_words)
         print(f"Text after Spell Checking: {corrected_text}")
 
-        # Step 2: Grammar Check
+        # Step 3: Grammar Check
         print("Running Grammar Checker...")
-        grammar_result = self.grammar_checker.check_grammar(corrected_text)
-
-        return grammar_result
+        # Split corrected_text into sentences by '.'
+        sentences = corrected_text.split(".")
+        
+        # Process each sentence individually and store grammar results
+        grammar_results = []
+        for sentence in sentences:
+            if sentence.strip():  # Check if the sentence is not empty
+                grammar_result = self.grammar_checker.check_grammar(sentence.strip())
+                grammar_results.append(grammar_result)
+        
+        return grammar_results
 
 
 # Configuration for the spell checker
 spell_checker_config = {
     "dictionary_path": 'data-spell-checker.xlsx',  # Path to the dictionary file
     "stopwords_path": 'stop words.txt',            # Path to the stopwords file
-    "suffixes_path": "suffixes_list.txt",         # Path to the suffixes list file
-    "stem_dictionary_path": "stem_dictionary.txt" # Path to the stem dictionary file
+    "suffixes_path": "suffixes_list.txt",          # Path to the suffixes list file
+    "stem_dictionary_path": "stem_dictionary.txt"  # Path to the stem dictionary file
 }
 
 # Ensure all files exist
@@ -61,11 +97,11 @@ text_processor = SinhalaTextProcessor(spell_checker_config)
 
 # Input Sentences
 input_sentences = [
-    "මම ගදර යයි ",       
-    "අපි කඩේට යයි",
-    "අපි අදරය කරයි",
-    "මම කෑම ගනිමු",
-    "අපි රට යයි"
+    "අපි කඩේ යයි.අපි උදේට කඩෙන කමු.",
+    "මම අද ගදර යයි.අපි හෙට ගමට යම.",
+    "අපි හෙට නුවර යන්නෙමි.මම දැන් වැවට යම.",
+    "මම ඔයාට අදරය කරයි.මම ඔයාගේ ගෙදර යයි.",
+    "අපි උත්සාහයෙන් වැඩ කරමි.අපි කොහොමහරි දිනයි."
 ]
 
 # Process each sentence
@@ -76,7 +112,9 @@ for sentence in input_sentences:
     result = text_processor.process_text(sentence)
     results.append(result)
 
-# Final Output
-print("\nFinal Output:")
+# Final Output: Print each grammar check result separately
+print("\nFinal Output: Grammar Check Results")
 for i, res in enumerate(results):
-    print(f"Sentence {i + 1}: {res}")
+    print(f"\nResults for Sentence {i + 1}:")
+    for grammar_result in res:
+        print(f"Grammar Check Result: {grammar_result}")
