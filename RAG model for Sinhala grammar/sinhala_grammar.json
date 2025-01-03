@@ -1,0 +1,157 @@
+{
+  "sinhala_grammar_rules": {
+    "metadata": {
+      "version": "1.0",
+      "language": "si",
+      "purpose": "grammar_error_detection"
+    },
+    "verb_conjugation_rules": [
+      {
+        "subject": "මම",
+        "category": "first_person_singular",
+        "tense_endings": {
+          "present": {
+            "endings": ["මි", "ෙමි"],
+            "examples": ["කරමි", "බලමි", "ලියමි"],
+            "error_patterns": ["මු", "හි", "යි", "ති"]
+          },
+          "past": {
+            "endings": ["ෙයමි"],
+            "examples": ["කළෙමි", "බැලුවෙමි", "ලිව්වෙමි"],
+            "error_patterns": ["ෙයමු", "ෙයහි", "ෙයය", "ෙයති"]
+          },
+          "future": {
+            "endings": ["න්නෙමි"],
+            "examples": ["කරන්නෙමි", "බලන්නෙමි", "ලියන්නෙමි"],
+            "error_patterns": ["න්නෙමු", "න්නෙහි", "න්නේය", "න්නෙති"]
+          }
+        }
+      },
+      {
+        "subject": "අපි",
+        "category": "first_person_plural",
+        "tense_endings": {
+          "present": {
+            "endings": ["මු", "මුු"],
+            "examples": ["කරමු", "බලමු", "ලියමු"],
+            "error_patterns": ["මි", "හි", "යි", "ති"]
+          },
+          "past": {
+            "endings": ["ෙමු"],
+            "examples": ["කළෙමු", "බැලුවෙමු", "ලිව්වෙමු"],
+            "error_patterns": ["ෙයමි", "ෙයහි", "ෙයය", "ෙයති"]
+          },
+          "future": {
+            "endings": ["න්නෙමු"],
+            "examples": ["කරන්නෙමු", "බලන්නෙමු", "ලියන්නෙමු"],
+            "error_patterns": ["න්නෙමි", "න්නෙහි", "න්නේය", "න්නෙති"]
+          }
+        }
+      },
+      {
+        "subject": "ඔබ",
+        "category": "second_person_singular",
+        "tense_endings": {
+          "present": {
+            "endings": ["හි", "න්න"],
+            "examples": ["කරහි", "බලහි", "ලියහි"],
+            "error_patterns": ["මි", "මු", "යි", "ති"]
+          },
+          "past": {
+            "endings": ["ෙයහි"],
+            "examples": ["කළෙහි", "බැලුවෙහි", "ලිව්වෙහි"],
+            "error_patterns": ["ෙයමි", "ෙයමු", "ෙයය", "ෙයති"]
+          },
+          "future": {
+            "endings": ["න්නෙහි"],
+            "examples": ["කරන්නෙහි", "බලන්නෙහි", "ලියන්නෙහි"],
+            "error_patterns": ["න්නෙමි", "න්නෙමු", "න්නේය", "න්නෙති"]
+          }
+        }
+      },
+      {
+        "subject": "ඔහු/ඇය",
+        "category": "third_person_singular",
+        "tense_endings": {
+          "present": {
+            "endings": ["යි", "ය"],
+            "examples": ["කරයි", "බලයි", "ලියයි"],
+            "error_patterns": ["මි", "මු", "හි", "ති"]
+          },
+          "past": {
+            "endings": ["ේය"],
+            "examples": ["කළේය", "බැලුවේය", "ලිව්වේය"],
+            "error_patterns": ["ෙයමි", "ෙයමු", "ෙයහි", "ෙයති"]
+          },
+          "future": {
+            "endings": ["න්නේය"],
+            "examples": ["කරන්නේය", "බලන්නේය", "ලියන්නේය"],
+            "error_patterns": ["න්නෙමි", "න්නෙමු", "න්නෙහි", "න්නෙති"]
+          }
+        }
+      }
+    ],
+    "case_markers": [
+      {
+        "case": "nominative",
+        "markers": [""],
+        "examples": ["ගස", "මිනිසා", "ගල"],
+        "usage": "subject_marking",
+        "error_patterns": ["ව", "ට", "ගේ", "ෙග්"]
+      },
+      {
+        "case": "accusative",
+        "markers": ["ව", "ට"],
+        "examples": ["ගසව", "මිනිසාව", "ගලව"],
+        "usage": "object_marking",
+        "error_patterns": ["ගේ", "ෙග්", "න්", "හි"]
+      },
+      {
+        "case": "dative",
+        "markers": ["ට"],
+        "examples": ["ගසට", "මිනිසාට", "ගලට"],
+        "usage": "indirect_object_marking",
+        "error_patterns": ["ව", "ගේ", "න්", "හි"]
+      }
+    ],
+    "error_detection_patterns": [
+      {
+        "error_type": "subject_verb_agreement",
+        "pattern": "subject + incorrect_verb_ending",
+        "examples": [
+          {
+            "incorrect": "මම යමු",
+            "correct": "මම යමි",
+            "explanation": "First person singular requires මි ending"
+          },
+          {
+            "incorrect": "අපි යයි",
+            "correct": "අපි යමු",
+            "explanation": "First person plural requires මු ending"
+          }
+        ]
+      },
+      {
+        "error_type": "tense_agreement",
+        "pattern": "temporal_word + incorrect_tense",
+        "examples": [
+          {
+            "incorrect": "ඊයේ යනවා",
+            "correct": "ඊයේ ගියා",
+            "explanation": "Past temporal word requires past tense"
+          },
+          {
+            "incorrect": "හෙට ගියා",
+            "correct": "හෙට යනවා",
+            "explanation": "Future temporal word requires future tense"
+          }
+        ]
+      }
+    ],
+    "temporal_markers": {
+      "past": ["ඊයේ", "පෙරේදා", "පසුගිය"],
+      "present": ["අද", "දැන්", "මේ වෙලාවේ"],
+      "future": ["හෙට", "අනිද්දා", "ලබන"]
+    }
+  }
+}
