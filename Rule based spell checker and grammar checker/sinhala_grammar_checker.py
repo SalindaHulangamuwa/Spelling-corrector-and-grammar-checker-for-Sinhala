@@ -28,7 +28,7 @@ class SinhalaGrammarChecker:
             return False  # Sentence too short to be SOV
         
         subject_tag, object_tag, verb_tag = pos_tags[0][1], pos_tags[1][1], pos_tags[2][1]
-        return subject_tag == 'PRP' and object_tag == 'NNC'or'NCV'or'JJ' and verb_tag.startswith('V')
+        return subject_tag == 'PRP' and object_tag == 'NNC'or'JJ'or'NCV' and verb_tag.startswith('V')
         
     def check_verb_agreement(self, subject, verb):
 
