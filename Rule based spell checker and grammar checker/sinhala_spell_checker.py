@@ -1,12 +1,11 @@
 import pandas as pd
 import re
-from fuzzywuzzy import fuzz, process
-import difflib
 from typing import List, Dict, Tuple
-
+from fuzzywuzzy import fuzz
+import difflib
 
 class SinhalaSpellChecker:
-    def __init__(self, dictionary_path: str, stopwords_path: str, suffixes_path: str, stem_dictionary_path: str):
+    def _init_(self, dictionary_path: str, stopwords_path: str, suffixes_path: str, stem_dictionary_path: str):
         # Load dictionary
         self.data = pd.read_excel(dictionary_path)
         self.dictionary = self._preprocess_dictionary()
@@ -105,64 +104,52 @@ class SinhalaSpellChecker:
         return variations
     
     def find_corrections(self, word: str, limit: int = 5, threshold: int = 70) -> List[Tuple[str, int]]:
-        """Enhanced correction finding with prefix variations and multiple similarity metrics"""
-        # Check if word is already correct
+        """Find corrections based on similarity metrics and variations"""
+        # Check if the word exists in the dictionary
         if word in self.stopwords or word in self.dictionary:
             return [(word, 100)]
         
-        # Generate prefix variations to check
-        word_variations = self._generate_prefix_variations(word)
+        # Check if the word is a valid variation
+        for variation in self._generate_prefix_variations(word):
+            if variation in self.dictionary:
+                return [(variation, 100)]
         
-        # Comprehensive similarity calculation
+        # Find base word using advanced stemming
+        base_word = self._advanced_stemmer(word)
+        
+        # Find closest matches based on similarity metrics
         candidates = []
         for dict_word in self.dictionary:
-            for variation in word_variations:
-                # Stem both variation and dictionary word
-                stemmed_variation = self._advanced_stemmer(variation)
-                stemmed_dict_word = self._advanced_stemmer(dict_word)
-                
-                # Multiple similarity metrics
-                phonetic_similarity = fuzz.ratio(
-                    self._phonetic_key(stemmed_variation), 
-                    self._phonetic_key(stemmed_dict_word)
-                )
-                
-                string_similarity = fuzz.ratio(stemmed_variation, stemmed_dict_word)
-                edit_similarity = fuzz.token_sort_ratio(stemmed_variation, stemmed_dict_word)
-                
-                # Sequence matcher for more nuanced similarity
-                seq_matcher = difflib.SequenceMatcher(None, stemmed_variation, stemmed_dict_word)
-                sequence_similarity = seq_matcher.ratio() * 100
-                
-                # Prefix similarity
-                prefix_similarity = fuzz.ratio(variation[:3], dict_word[:3]) * 0.5
-                
-                # Combined weighted similarity
-                combined_score = (
-                    0.25 * phonetic_similarity + 
-                    0.2 * string_similarity + 
-                    0.15 * edit_similarity +
-                    0.25 * sequence_similarity +
-                    0.15 * prefix_similarity
-                )
-                
+            # Check if the base word matches the dictionary word
+            if base_word == dict_word:
+                return [(dict_word, 100)]
+            
+            # Use multiple similarity metrics
+            phonetic_similarity = fuzz.ratio(self._phonetic_key(word), self._phonetic_key(dict_word))
+            string_similarity = fuzz.ratio(word, dict_word)
+            edit_similarity = fuzz.token_sort_ratio(word, dict_word)
+            
+            # Sequence matcher for more nuanced similarity
+            seq_matcher = difflib.SequenceMatcher(None, word, dict_word)
+            sequence_similarity = seq_matcher.ratio() * 100
+            
+            combined_score = (
+                0.25 * phonetic_similarity + 
+                0.2 * string_similarity + 
+                0.15 * edit_similarity +
+                0.25 * sequence_similarity
+            )
+            
+            if combined_score >= threshold:
                 candidates.append((dict_word, combined_score))
         
-        # Sort, filter, and limit candidates
-        candidates = sorted(candidates, key=lambda x: x[1], reverse=True)
-        unique_candidates = []
-        seen = set()
-        for candidate, score in candidates:
-            if candidate not in seen and score >= threshold:
-                unique_candidates.append((candidate, score))
-                seen.add(candidate)
-                if len(unique_candidates) == limit:
-                    break
+        # Sort and return top candidates
+        candidates = sorted(candidates, key=lambda x: x[1], reverse=True)[:limit]
         
-        return unique_candidates
+        return candidates
     
     def spell_check(self, text: str) -> Dict[str, List[Tuple[str, int]]]:
-        """Comprehensive spell checking"""
+        """Check and find spelling errors in the given text"""
         words = re.findall(r'\S+', text)
         
         spelling_errors = {}
@@ -175,7 +162,7 @@ class SinhalaSpellChecker:
         return spelling_errors
     
     def auto_correct(self, text: str) -> str:
-        """Automatically correct text using best suggestions"""
+        """Automatically correct the text using the best suggestions"""
         errors = self.spell_check(text)
         corrected_words = []
         
