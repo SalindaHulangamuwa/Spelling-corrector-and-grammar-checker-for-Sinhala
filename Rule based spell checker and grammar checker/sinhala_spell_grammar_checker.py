@@ -3,11 +3,10 @@ from sinhala_spell_checker import SinhalaSpellChecker
 from sinhala_grammar_checker import SinhalaGrammarChecker
 
 def read_suffixes_from_file(file_path):
-
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             # Read lines and remove any whitespace/newlines
-            suffixes = [line.strip() for line in file if line.strip()]
+            suffixes = [line.strip() for line in file if line.strip()]    
         return suffixes
     except FileNotFoundError:
         print(f"Error: Cannot find file {file_path}")
@@ -17,7 +16,6 @@ def read_suffixes_from_file(file_path):
         return []
 
 def check_word_with_suffixes(checking_word, base_word, suffixes_list):
-
     # First check if the checking_word starts with the base_word
     if not checking_word.startswith(base_word):
         return False, None
@@ -39,8 +37,10 @@ def check_word_with_suffixes(checking_word, base_word, suffixes_list):
 
 
 class SinhalaTextProcessor:
-    def _init_(self, spell_checker_config: dict, suffixes_list: list):
-
+    def _init_(self, spell_checker_config: dict):
+        """
+        Initialize the text processor with spell checker and grammar checker.
+        """
         self.spell_checker = SinhalaSpellChecker(
             dictionary_path=spell_checker_config["dictionary_path"],
             stopwords_path=spell_checker_config["stopwords_path"],
@@ -48,15 +48,15 @@ class SinhalaTextProcessor:
             stem_dictionary_path=spell_checker_config["stem_dictionary_path"]
         )
         self.grammar_checker = SinhalaGrammarChecker()
-        self.suffixes_list = suffixes_list
+        
+        # Load the suffixes list
+        self.suffixes_list = read_suffixes_from_file(spell_checker_config["suffixes_path"])
 
     def _get_base_word(self, word: str) -> str:
-
         base_word = self.spell_checker._advanced_stemmer(word)
         return base_word
 
     def _is_word_misspelled(self, word: str) -> bool:
-
         # Check if the word exists in the dictionary
         if word in self.spell_checker.dictionary:
             return False  # Word is correctly spelled
@@ -67,13 +67,12 @@ class SinhalaTextProcessor:
         # Check if any variations of the base word match the given word
         valid, matched_word = check_word_with_suffixes(word, base_word, self.suffixes_list)
         if valid:
-            return False  # Word is valid as a variation of its base
+            return True  # Word is valid as a variation of its base
         
         # If no match, the word is considered misspelled
-        return True
+        return False
 
     def _correct_word(self, word: str) -> str:
-
         if self._is_word_misspelled(word):
             # Check the word with the spell checker
             corrected_word = self.spell_checker.auto_correct(word)
@@ -81,7 +80,6 @@ class SinhalaTextProcessor:
         return word
 
     def process_text(self, text: str) -> str:
-
         # Step 1: Tokenize and identify subject, object, and verb
         words = text.split()
         if len(words) < 3:
@@ -125,7 +123,7 @@ class SinhalaTextProcessor:
         corrected_text = ' '.join(corrected_words)
         print(f"Text after Spell Checking: {corrected_text}")
 
-         # Step 3: Grammar Check
+        # Step 3: Grammar Check
         print("Running Grammar Checker...")
         # Split corrected_text into sentences by '.'
         sentences = corrected_text.split(".")
@@ -153,17 +151,14 @@ for file_path in spell_checker_config.values():
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
-# Read suffixes from file
-suffixes_list = read_suffixes_from_file(spell_checker_config["suffixes_path"])
-
 # Initialize the Sinhala Text Processor
-text_processor = SinhalaTextProcessor(spell_checker_config, suffixes_list)
+text_processor = SinhalaTextProcessor(spell_checker_config)
 
 # Input Sentences
 input_sentences = [
     "අපි කඩේ යයි.අපි උදේට කඩෙන කමු.",
     "මම අද ගදර යයි.අපි හෙට ගමට යම.",
-    "අපි හෙට නුවර යන්නෙමි.මම දැන් වැවට යම.",
+    "අපි හෙට නුවර යමි.මම දැන් වැවට යමු.",
     "මම ඔයාට අදරය කරයි.මම ඔයාගේ ගෙදර යයි.",
     "අපි උත්සාහයෙන් වැඩ කරමි.අපි කොහොමහරි දිනයි."
 ]
